@@ -1,0 +1,6 @@
+# WorkBuddy 会话数据，不入库
+.workbuddy/
+# 依赖与系统文件
+node_modules/
+.DS_Store
+Thumbs.db

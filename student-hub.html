@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学生成长管理平台</title>
+<style>
+:root{
+  --bg:#f5f6fa; --panel:#ffffff; --line:#e6e8f0; --line2:#eef0f6;
+  --tx:#1c2033; --tx2:#5b6478; --tx3:#8b93a7;
+  --pri:#4f46e5; --pri-l:#eef0ff; --pri-d:#3f37c9;
+  --ok:#10b981; --ok-l:#e7f8f1; --warn:#f59e0b; --warn-l:#fef4e3;
+  --dan:#ef4444; --dan-l:#fdecec; --info:#0ea5e9; --info-l:#e6f6fd;
+  --r:14px; --sd:0 1px 2px rgba(20,25,50,.05),0 6px 18px rgba(20,25,50,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#d3d7e3;border-radius:9px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- layout ---------- */
+.app{display:flex;min-height:100vh}
+.side{width:224px;flex:0 0 224px;background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:20}
+.brand{padding:20px 18px 14px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#0ea5e9);
+  display:flex;align-items:center;justify-content:center;flex:0 0 34px}
+.brand h1{font-size:15px;font-weight:700;letter-spacing:.3px}
+.brand p{font-size:11px;color:var(--tx3)}
+.nav{padding:6px 10px;flex:1;overflow:auto}
+.nav button{width:100%;display:flex;align-items:center;gap:10px;padding:9px 11px;border:0;background:none;
+  border-radius:10px;cursor:pointer;color:var(--tx2);font-size:13.5px;text-align:left;transition:.15s;margin-bottom:2px}
+.nav button:hover{background:#f3f4f9;color:var(--tx)}
+.nav button.on{background:var(--pri-l);color:var(--pri);font-weight:600}
+.nav button svg{width:17px;height:17px;flex:0 0 17px;opacity:.85}
+.nav .badge{margin-left:auto;background:#e9ebf3;color:var(--tx2);font-size:11px;padding:1px 7px;border-radius:20px}
+.nav button.on .badge{background:#fff;color:var(--pri)}
+.side-foot{padding:12px;border-top:1px solid var(--line2);display:flex;gap:6px}
+.side-foot button{flex:1;padding:7px;border:1px solid var(--line);background:#fff;border-radius:9px;
+  cursor:pointer;font-size:12px;color:var(--tx2)}
+.side-foot button:hover{border-color:var(--pri);color:var(--pri)}
+
+.main{flex:1;margin-left:224px;min-width:0}
+.top{position:sticky;top:0;z-index:15;background:rgba(245,246,250,.9);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:14px 26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.top h2{font-size:18px;font-weight:700}
+.top .sub{font-size:12.5px;color:var(--tx3)}
+.top .spacer{flex:1}
+.wrap{padding:22px 26px 60px}
+
+/* ---------- generic ---------- */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;border:1px solid var(--line);
+  background:#fff;cursor:pointer;font-size:13px;color:var(--tx2);transition:.15s;white-space:nowrap}
+.btn:hover{border-color:#c9cde0;color:var(--tx)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:600}
+.btn.pri:hover{background:var(--pri-d);border-color:var(--pri-d);color:#fff}
+.btn.dan{color:var(--dan);border-color:#f3cfcf}
+.btn.dan:hover{background:var(--dan-l);border-color:var(--dan);color:var(--dan)}
+.btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
+.btn svg{width:15px;height:15px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sd)}
+.pad{padding:18px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.muted{color:var(--tx3)}
+.small{font-size:12.5px}
+.empty{padding:46px 20px;text-align:center;color:var(--tx3)}
+.empty svg{width:44px;height:44px;opacity:.3;margin-bottom:10px}
+
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:11.5px;
+  background:#f0f2f7;color:var(--tx2);font-weight:500;white-space:nowrap}
+.chip.p{background:var(--pri-l);color:var(--pri)}
+.chip.g{background:var(--ok-l);color:#079669}
+.chip.o{background:var(--warn-l);color:#b97609}
+.chip.b{background:var(--info-l);color:#0284c7}
+.chip.r{background:var(--dan-l);color:var(--dan)}
+
+input[type=text],input[type=date],select,textarea{width:100%;padding:8px 11px;border:1px solid var(--line);
+  border-radius:9px;background:#fff;outline:none;transition:.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+textarea{min-height:82px;resize:vertical;line-height:1.65}
+label.f{display:block;font-size:12.5px;color:var(--tx2);margin-bottom:5px;font-weight:500}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.form .full{grid-column:1/-1}
+
+/* ---------- dashboard ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:14px;margin-bottom:18px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 17px;box-shadow:var(--sd)}
+.stat .k{font-size:12px;color:var(--tx3);display:flex;align-items:center;gap:7px}
+.stat .k i{width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+.stat .k i svg{width:14px;height:14px}
+.stat .v{font-size:26px;font-weight:700;margin-top:7px;letter-spacing:-.5px}
+.stat .d{font-size:11.5px;color:var(--tx3);margin-top:2px}
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+@media(max-width:1080px){.grid2{grid-template-columns:1fr}}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:14px 17px;border-bottom:1px solid var(--line2)}
+.hd h3{font-size:14.5px;font-weight:700}
+.list .li{padding:11px 17px;border-bottom:1px solid var(--line2);display:flex;gap:11px;align-items:flex-start}
+.list .li:last-child{border-bottom:0}
+.av{width:32px;height:32px;border-radius:50%;flex:0 0 32px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:12.5px;font-weight:600}
+
+/* ---------- students ---------- */
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.filters input[type=text]{width:210px}
+.filters select{width:auto;min-width:120px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:14px}
+.scard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--sd);
+  transition:.18s;position:relative}
+.scard:hover{border-color:#cdd2e6;transform:translateY(-2px)}
+.scard .toprow{display:flex;gap:11px;align-items:center;margin-bottom:11px}
+.scard .av{width:42px;height:42px;flex:0 0 42px;font-size:15px}
+.scard .nm{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+.scard .mt{font-size:12px;color:var(--tx3)}
+.scard .goal{font-size:12.5px;color:var(--tx2);background:#f7f8fc;border-radius:9px;padding:8px 10px;margin:9px 0;
+  min-height:38px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.scard .acts{display:flex;gap:6px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line2)}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+
+/* ---------- timeline ---------- */
+.tl{position:relative;padding-left:0}
+.tl .it{position:relative;padding:0 0 4px 26px;border-left:2px solid var(--line);margin-left:8px;padding-bottom:18px}
+.tl .it:last-child{border-left-color:transparent}
+.tl .it::before{content:"";position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;
+  background:#fff;border:2.5px solid var(--pri)}
+.tl .it.done::before{border-color:var(--ok)}
+.tl .it .d{font-size:12px;color:var(--tx3);display:flex;gap:8px;align-items:center;margin-bottom:3px}
+.tl .it .t{font-weight:600;font-size:14px}
+.tl .it .c{color:var(--tx2);font-size:13px;margin-top:3px;white-space:pre-wrap}
+.tl .it .n{margin-top:7px;font-size:12.5px;color:#0284c7;background:var(--info-l);padding:6px 10px;border-radius:8px;display:inline-block}
+
+/* ---------- path ---------- */
+.pgrid{display:grid;grid-template-columns:250px 1fr;gap:16px}
+@media(max-width:960px){.pgrid{grid-template-columns:1fr}}
+.plist{max-height:calc(100vh - 210px);overflow:auto}
+.plist .pi{padding:10px 14px;display:flex;gap:9px;align-items:center;cursor:pointer;border-bottom:1px solid var(--line2)}
+.plist .pi:hover{background:#f7f8fc}
+.plist .pi.on{background:var(--pri-l)}
+.plist .pi .av{width:28px;height:28px;flex:0 0 28px;font-size:11.5px}
+.plist .pi .nm{font-size:13.5px;font-weight:600}
+.plist .pi .pg{font-size:11.5px;color:var(--tx3)}
+.pbar{height:7px;background:#eef0f6;border-radius:9px;overflow:hidden;margin-top:5px}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,#6366f1,#0ea5e9);border-radius:9px;transition:.4s}
+.stages{margin-top:6px}
+.stage{display:flex;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line2);align-items:flex-start}
+.stage:last-child{border-bottom:0}
+.stage .dot{width:26px;height:26px;border-radius:50%;flex:0 0 26px;display:flex;align-items:center;justify-content:center;
+  background:#f0f2f7;color:var(--tx3);font-size:12px;font-weight:700;margin-top:2px}
+.stage.s-done .dot{background:var(--ok-l);color:var(--ok)}
+.stage.s-doing .dot{background:var(--pri-l);color:var(--pri)}
+.stage .ti{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stage .de{font-size:12.5px;color:var(--tx2);margin-top:2px}
+.stage .du{font-size:11.5px;color:var(--tx3);margin-top:3px}
+.stage .sp{flex:1}
+.stage.done .ti{color:var(--tx3);text-decoration:line-through}
+
+/* ---------- blog ---------- */
+.bgrid{display:grid;grid-template-columns:230px 1fr;gap:16px}
+@media(max-width:960px){.bgrid{grid-template-columns:1fr}}
+.bhead{background:linear-gradient(135deg,#6366f1,#0ea5e9);border-radius:var(--r);padding:22px;color:#fff;position:relative;overflow:hidden}
+.bhead::after{content:"";position:absolute;right:-40px;top:-50px;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,.12)}
+.bhead .av{width:56px;height:56px;flex:0 0 56px;font-size:20px;border:2.5px solid rgba(255,255,255,.55)}
+.bhead h3{font-size:20px;font-weight:700}
+.bhead .g{font-size:13px;opacity:.9;margin-top:3px}
+.bhead .bs{display:flex;gap:22px;margin-top:15px;position:relative;z-index:1}
+.bhead .bs div b{display:block;font-size:19px;font-weight:700}
+.bhead .bs div span{font-size:11.5px;opacity:.85}
+.posts{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:14px;margin-top:16px}
+.post{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sd);
+  display:flex;flex-direction:column;transition:.18s}
+.post:hover{transform:translateY(-2px);border-color:#cdd2e6}
+.post .cov{height:92px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;letter-spacing:.5px}
+.post .bd{padding:13px 15px;flex:1}
+.post .bd h4{font-size:14.5px;font-weight:700;margin:4px 0 5px;line-height:1.4}
+.post .bd .s{font-size:12.5px;color:var(--tx2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.post .ft{padding:10px 15px;border-top:1px solid var(--line2);display:flex;gap:6px;align-items:center}
+.post .ft .sp{flex:1}
+.article{line-height:1.85;white-space:pre-wrap;font-size:13.5px;color:var(--tx2)}
+
+/* ---------- modal ---------- */
+.mask{position:fixed;inset:0;background:rgba(18,22,40,.42);backdrop-filter:blur(2px);z-index:60;
+  display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .18s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:88vh;display:flex;flex-direction:column;
+  box-shadow:0 20px 60px rgba(15,20,45,.28);animation:pop .2s}
+.modal.wide{max-width:720px}
+@keyframes pop{from{transform:translateY(14px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.modal .mh{padding:16px 20px;border-bottom:1px solid var(--line2);display:flex;align-items:center;justify-content:between}
+.modal .mh h3{font-size:16px;font-weight:700}
+.modal .mb{padding:20px;overflow:auto}
+.modal .mf{padding:14px 20px;border-top:1px solid var(--line2);display:flex;justify-content:flex-end;gap:9px}
+.xbtn{border:0;background:none;cursor:pointer;color:var(--tx3);padding:4px;border-radius:7px;display:flex}
+.xbtn:hover{background:#f2f3f8;color:var(--tx)}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#1c2033;color:#fff;
+  padding:10px 20px;border-radius:10px;font-size:13px;z-index:99;box-shadow:0 8px 26px rgba(0,0,0,.2);animation:fade .2s}
+
+@media(max-width:820px){
+  .side{width:64px;flex:0 0 64px}.brand h1,.brand p,.nav span,.nav .badge,.side-foot span{display:none}
+  .nav button{justify-content:center;padding:11px}.main{margin-left:64px}.wrap{padding:16px}
+}
+@media print{.side,.top,.no-print{display:none!important}.main{margin:0}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="M5 10v6c0 1.5 3.1 3 7 3s7-1.5 7-3v-6"/></svg></div>
+      <div><h1>学生成长平台</h1><p>Student Hub</p></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <button onclick="exportJSON()"><span>导出数据</span></button>
+      <button onclick="$('#fileIn').click()"><span>导入</span></button>
+    </div>
+    <input type="file" id="fileIn" accept="application/json" style="display:none" onchange="importJSON(this)">
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div><h2 id="vTitle">总览</h2><div class="sub" id="vSub"></div></div>
+      <div class="spacer"></div>
+      <div id="topActs" class="row"></div>
+    </div>
+    <div class="wrap" id="view"></div>
+  </main>
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+/* ============ utils ============ */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+const PAL=['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#14b8a6','#ec4899'];
+const colorOf=n=>{let h=0;for(const c of String(n||'x'))h=(h*31+c.charCodeAt(0))>>>0;return PAL[h%PAL.length];};
+const initials=n=>String(n||'?').trim().slice(-2);
+const ICON={
+ dash:'<path d="M3 12h7V3H3v9Zm11 9h7v-9h-7v9ZM3 21h7v-5H3v5ZM14 8h7V3h-7v5Z"/>',
+ stu:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+ talk:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z"/>',
+ path:'<path d="M3 6h4l3 6 4-12 3 6h4"/>',
+ blog:'<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+ trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
+ x:'<path d="M18 6 6 18M6 6l12 12"/>',
+ up:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M12 3v12M7 8l5-5 5 5"/>',
+ dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+ share:'<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v14"/>',
+ eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+ chk:'<path d="M20 6 9 17l-5-5"/>'
+};
+const svg=(k,sz)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[k]||''}</svg>`;
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2200);}
+
+/* ============ data ============ */
+const KEY='student-hub-v1';
+function seed(){
+  const s1=uid(),s2=uid(),s3=uid(),s4=uid();
+  return {
+    students:[
+      {id:s1,name:'林知远',gender:'男',grade:'高二(3)班',group:'竞赛组',phone:'138****2210',guardian:'林父 / 138****2210',
+       enroll:'2025-09-01',tags:['信息学','自律','冲刺省赛'],goal:'一年内拿到 NOIP 一等奖，并完成一个完整的开源项目。',status:'在读'},
+      {id:s2,name:'陈牧',gender:'女',grade:'高一(1)班',group:'基础组',phone:'139****7745',guardian:'陈母 / 139****7745',
+       enroll:'2026-02-20',tags:['Python入门','需要鼓励'],goal:'先补齐 Python 基础，学期末能独立写出一个爬虫小工具。',status:'在读'},
+      {id:s3,name:'苏晚',gender:'女',grade:'高三(2)班',group:'作品集组',phone:'137****3390',guardian:'苏母 / 137****3390',
+       enroll:'2024-09-01',tags:['创意编程','留学作品集'],goal:'完成 3 个交互作品，形成可用于申请的作品集网站。',status:'在读'},
+      {id:s4,name:'何一诺',gender:'男',grade:'初三(5)班',group:'基础组',phone:'135****8821',guardian:'何父 / 135****8821',
+       enroll:'2026-03-10',tags:['图形化转代码'],goal:'从图形化编程平稳过渡到代码编程，暑假前完成 20 道进阶题。',status:'在读'}
+    ],
+    interactions:[
+      {id:uid(),sid:s1,date:'2026-08-28',type:'作业反馈',topic:'动态规划专题复盘',content:'专题 12 题中错 3 题，主要集中在状态定义不清。已要求把每题的状态转移方程手写一遍再提交。',next:'下周三前提交手写版状态方程，我逐题批注。'},
+      {id:uid(),sid:s1,date:'2026-08-15',type:'一对一答疑',topic:'省赛策略沟通',content:'讨论了省赛的时间分配与暴力分拿法，确定先保前两题再冲第三题。',next:'做两套模拟赛，按比赛节奏计时。'},
+      {id:uid(),sid:s2,date:'2026-08-30',type:'鼓励沟通',topic:'第一次独立完成调试',content:'陈牧自己定位到一个缩进错误并修复，情绪明显好转，愿意在群里提问了。',next:'下次课让她给同学讲一遍调试思路。'},
+      {id:uid(),sid:s3,date:'2026-08-22',type:'作品点评',topic:'作品集第二稿评审',content:'视觉完成度高，但交互说明缺失。建议每个作品补一段 150 字的设计说明。',next:'9 月 5 日前补齐三段说明文字。'},
+      {id:uid(),sid:s4,date:'2026-09-01',type:'家长沟通',topic:'学习节奏同步',content:'与何父沟通每周两次课的频率，家长担心作业量，已说明当前阶段以兴趣保持为主。',next:'一个月后回访，看孩子的主动提问次数。'}
+    ],
+    paths:{
+      [s1]:{title:'NOIP 一等奖冲刺路径',stages:[
+        {id:uid(),title:'数据结构基础巩固',desc:'线性表、栈队列、树与图的标准实现与模板背诵',due:'2026-03-30',status:'done'},
+        {id:uid(),title:'动态规划专题',desc:'背包、区间 DP、树形 DP、状压 DP 四类 80 题',due:'2026-06-30',status:'done'},
+        {id:uid(),title:'图论与最短路',desc:'Dijkstra / SPFA / 最小生成树 / 网络流入门',due:'2026-09-30',status:'doing'},
+        {id:uid(),title:'模拟赛与复盘',desc:'每月 2 套全真模拟，赛后逐题复盘',due:'2026-11-15',status:'todo'},
+        {id:uid(),title:'开源项目交付',desc:'独立完成一个 500 行以上的工具库，含文档与测试',due:'2026-12-31',status:'todo'}
+      ]},
+      [s2]:{title:'Python 基础→小工具路径',stages:[
+        {id:uid(),title:'语法与数据类型',desc:'变量、循环、函数、列表字典，配套 60 道练习',due:'2026-04-30',status:'done'},
+        {id:uid(),title:'文件与异常处理',desc:'读写 CSV/JSON，try-except 规范写法',due:'2026-06-15',status:'doing'},
+        {id:uid(),title:'爬虫入门',desc:'requests + BeautifulSoup 抓取静态页面',due:'2026-09-30',status:'todo'},
+        {id:uid(),title:'第一个完整工具',desc:'独立写出一个可复用的小工具并发布',due:'2026-12-20',status:'todo'}
+      ]},
+      [s3]:{title:'交互作品集路径',stages:[
+        {id:uid(),title:'创意编程技法',desc:'p5.js 动画、粒子、噪声与生成艺术',due:'2026-01-31',status:'done'},
+        {id:uid(),title:'作品一：城市声音地图',desc:'音频可视化 + 地图交互',due:'2026-05-30',status:'done'},
+        {id:uid(),title:'作品二：情绪日记',desc:'数据驱动的日记可视化，含本地存储',due:'2026-09-30',status:'doing'},
+        {id:uid(),title:'作品三 + 作品集网站',desc:'三件作品整合为响应式个人站点',due:'2026-12-15',status:'todo'}
+      ]},
+      [s4]:{title:'图形化→代码过渡路径',stages:[
+        {id:uid(),title:'图形化项目复盘',desc:'把已完成的 Scratch 项目讲清楚逻辑结构',due:'2026-04-15',status:'done'},
+        {id:uid(),title:'Python 语法起步',desc:'从 print 到函数，20 道基础题',due:'2026-07-31',status:'doing'},
+        {id:uid(),title:'20 道进阶题',desc:'含分支嵌套、列表遍历、简单算法',due:'2026-12-31',status:'todo'}
+      ]}
+    },
+    posts:[
+      {id:uid(),sid:s1,date:'2026-08-20',type:'获奖',title:'NOIP 2026 初赛 全市第 7 名',summary:'第一次进入全市前十，复盘了考前两周的刷题节奏。',
+       content:'这次初赛比预期好，主要赢在节奏：考前两周没有再刷新题，而是把过去三个月的错题按知识点重做了一遍。\n\n真正拉开差距的是最后 15 分钟——我没有慌着提交，而是把三道不确定的题重新读了一遍题面，改对了两处边界条件。',tags:['NOIP','复盘']},
+      {id:uid(),sid:s1,date:'2026-07-12',type:'项目',title:'开源项目：算法模板库 Algokit',
+       summary:'把自己整理的 60 个算法模板做成了一个可 pip 安装的库。',
+       content:'起因是每次比赛前都要翻笔记，索性做成了库。\n\n现在包含图论、DP、字符串三大模块，每个模板都配了可运行的最小示例和复杂度说明。下一步补单元测试。',tags:['开源','Python']},
+      {id:uid(),sid:s2,date:'2026-08-30',type:'随笔',title:'我终于会自己改 bug 了',
+       summary:'一个缩进错误卡了我两天，最后靠打印变量找到的。',
+       content:'以前报错就喊老师。这次老师只问我一句："你觉得它哪一步和你想的不一样？"\n\n我于是在循环里打了一堆 print，看到第三次输出突然就对上了——循环没进去，因为缩进写错了。\n\n原来调试不是靠运气，是靠把看不见的过程显示出来。',tags:['调试','成长']},
+      {id:uid(),sid:s3,date:'2026-08-22',type:'作品',title:'作品二：情绪日记 的第一次原型',
+       summary:'用本地存储做了一个能记录心情曲线的日记本。',
+       content:'界面很简单：选一个今天的心情分值，写几句话，保存。\n\n有意思的是连续记录两周之后，那条曲线本身变成了一件作品——它比任何一篇日记都诚实。\n\n下一版想加入天气数据，看看天气和情绪到底有没有关系。',tags:['p5.js','数据可视化']},
+      {id:uid(),sid:s3,date:'2026-06-02',type:'证书',title:'作品一 入选校级创作展',
+       summary:'城市声音地图在校创作展展出两周。',content:'展出期间有 40 多位同学在地图上留下了自己录的城市声音。\n\n有人录了早市的叫卖，有人录了地铁报站。那一刻觉得编程做出来的东西终于走出了屏幕。',tags:['展览']},
+      {id:uid(),sid:s4,date:'2026-08-05',type:'作品',title:'从 Scratch 到 Python：我把打砖块重写了一遍',
+       summary:'用 Python 重写了以前 Scratch 里做过的游戏。',
+       content:'同样的游戏，Scratch 里拖了 60 多个积木块，Python 写了 80 行。\n\n最难的不是语法，是"循环"这个概念——Scratch 里它是个看得见的圈，到了代码里它变成了一个缩进。',tags:['游戏','过渡']}
+    ]
+  };
+}
+let db=(()=>{try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):seed();}catch(e){return seed();}})();
+db.paths=db.paths||{}; db.posts=db.posts||[]; db.interactions=db.interactions||[]; db.students=db.students||[];
+const save=()=>localStorage.setItem(KEY,JSON.stringify(db));
+const S=id=>db.students.find(x=>x.id===id);
+const postsOf=id=>db.posts.filter(p=>p.sid===id).sort((a,b)=>b.date.localeCompare(a.date));
+const itsOf=id=>db.interactions.filter(i=>i.sid===id).sort((a,b)=>b.date.localeCompare(a.date));
+const pathOf=id=>db.paths[id]||{title:'未设置学习路径',stages:[]};
+const prog=p=>{const t=p.stages.length;const d=p.stages.filter(s=>s.status==='done').length;return {t,d,pct:t?Math.round(d/t*100):0};};
+
+/* ============ modal ============ */
+function closeModal(){$('#modalRoot').innerHTML='';}
+function openModal(title,body,footer,wide){
+  $('#modalRoot').innerHTML=`<div class="mask" onclick="if(event.target===this)closeModal()">
+    <div class="modal${wide?' wide':''}">
+      <div class="mh" style="justify-content:space-between"><h3>${esc(title)}</h3>
+        <button class="xbtn" onclick="closeModal()">${svg('x')}</button></div>
+      <div class="mb">${body}</div><div class="mf">${footer||''}</div></div></div>`;
+}
+const F={};
+F.input=(n,l,v,o={})=>`<div class="${o.full?'full':''}"><label class="f">${esc(l)}${o.req?' *':''}</label>
+  <input type="${o.type||'text'}" name="${n}" value="${esc(v==null?'':v)}" ${o.req?'required':''} placeholder="${esc(o.ph||'')}"></div>`;
+F.textarea=(n,l,v,o={})=>`<div class="${o.full!==false?'full':''}"><label class="f">${esc(l)}${o.req?' *':''}</label>
+  <textarea name="${n}" ${o.req?'required':''} placeholder="${esc(o.ph||'')}" style="${o.h?`min-height:${o.h}px`:''}">${esc(v==null?'':v)}</textarea></div>`;
+F.select=(n,l,v,opts,o={})=>`<div class="${o.full?'full':''}"><label class="f">${esc(l)}</label><select name="${n}">
+  ${opts.map((x,i)=>{const val=x&&x.v!==undefined?x.v:x,lab=x&&x.l!==undefined?x.l:(o.labels?o.labels[i]:x);
+    return `<option value="${esc(val)}" ${String(val)===String(v)?'selected':''}>${esc(lab)}</option>`;}).join('')}</select></div>`;
+function openForm({title,body,values={},onSubmit,wide,okText='保存'}){
+  openModal(title,`<form id="mForm" class="form">${body}</form>`,
+    `<button class="btn" onclick="closeModal()">取消</button><button class="btn pri" type="submit" form="mForm">${okText}</button>`,wide);
+  $('#mForm').addEventListener('submit',e=>{e.preventDefault();
+    const d=Object.fromEntries(new FormData(e.target).entries());onSubmit(d);});
+}
+function confirmBox(msg,onOk,danger){
+  openModal('确认操作',`<div style="font-size:14px;line-height:1.7">${msg}</div>`,
+    `<button class="btn" onclick="closeModal()">取消</button>
+     <button class="btn ${danger?'dan':'pri'}" id="okBtn">确定</button>`);
+  $('#okBtn').onclick=()=>{closeModal();onOk();};
+}
+
+/* ============ nav ============ */
+const VIEWS=[
+  {k:'dash',n:'总览',i:'dash',t:'总览',s:'平台整体情况速览'},
+  {k:'students',n:'学生管理',i:'stu',t:'学生管理',s:'学生基本信息的增、删、改、查'},
+  {k:'talk',n:'互动记录',i:'talk',t:'师生互动记录',s:'按时间线沉淀每次沟通与反馈'},
+  {k:'path',n:'学习路径',i:'path',t:'学习路径',s:'为每个学生定制阶段目标与进度'},
+  {k:'blog',n:'成果博客',i:'blog',t:'成果展示与分享',s:'每位学生的独立博客页面'}
+];
+let ui={view:'dash',sid:null,bsid:null,q:'',fg:'',fs:'',ft:'',fsid:''};
+function renderNav(){
+  $('#nav').innerHTML=VIEWS.map(v=>`<button class="${ui.view===v.k?'on':''}" onclick="go('${v.k}')">
+    ${svg(v.i)}<span>${v.n}</span>${v.k==='students'?`<span class="badge">${db.students.length}</span>`:''}</button>`).join('');
+}
+function go(k){ui.view=k;$('.mask')&&closeModal();render();window.scrollTo({top:0,behavior:'smooth'});}
+function render(){
+  const v=VIEWS.find(x=>x.k===ui.view);renderNav();
+  $('#vTitle').textContent=v.t;$('#vSub').textContent=v.s;
+  ({dash:vDash,students:vStudents,talk:vTalk,path:vPath,blog:vBlog})[ui.view]();
+}
+
+/* ============ dashboard ============ */
+function vDash(){
+  const ns=db.students.length, ni=db.interactions.length, np=db.posts.length;
+  const month=today().slice(0,7);
+  const mi=db.interactions.filter(i=>i.date.slice(0,7)===month).length;
+  const avg=Math.round(db.students.reduce((a,s)=>a+prog(pathOf(s.id)).pct,0)/(ns||1));
+  const stat=(c,k,ico,label,val,desc)=>`<div class="stat"><div class="k"><i style="background:${c}22;color:${c}">${svg(ico)}</i>${label}</div>
+    <div class="v">${val}</div><div class="d">${desc}</div></div>`;
+  const recent=[...db.interactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const latest=[...db.posts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  $('#topActs').innerHTML=`<button class="btn pri" onclick="go('students')">${svg('plus')}新增学生</button>`;
+  $('#view').innerHTML=`
+   <div class="stats">
+     ${stat('#4f46e5','stu','在读学生',ns,'在册学生',db.students.filter(s=>s.status==='在读').length+' 人在读')}
+     ${stat('#0ea5e9','talk','本月互动',mi,'条互动记录','累计 '+ni+' 条')}
+     ${stat('#10b981','blog','成果总数',np,'篇成果','本月新增 '+db.posts.filter(p=>p.date.slice(0,7)===month).length+' 篇')}
+     ${stat('#f59e0b','path','平均进度',avg+'%','路径完成度','按阶段数加权平均')}
+   </div>
+   <div class="grid2">
+     <div class="card"><div class="hd"><h3>最近互动</h3>
+       <button class="btn sm" onclick="go('talk')">查看全部</button></div>
+       <div class="list">${recent.length?recent.map(i=>{const s=S(i.sid)||{name:'—'};return `
+         <div class="li"><div class="av" style="background:${colorOf(s.name)}">${esc(initials(s.name))}</div>
+         <div style="flex:1;min-width:0"><div class="small" style="font-weight:600">${esc(i.topic)}
+           <span class="chip ${typeCls(i.type)}" style="margin-left:6px">${esc(i.type)}</span></div>
+           <div class="small muted">${esc(s.name)} · ${esc(i.date)}</div></div></div>`;}).join(''):`<div class="empty">暂无互动记录</div>`}
+       </div></div>
+     <div class="card"><div class="hd"><h3>最新成果</h3>
+       <button class="btn sm" onclick="go('blog')">查看全部</button></div>
+       <div class="list">${latest.length?latest.map(p=>{const s=S(p.sid)||{name:'—'};return `
+         <div class="li"><div class="av" style="background:${colorOf(p.type)}">${esc(p.type[0])}</div>
+         <div style="flex:1;min-width:0"><div class="small" style="font-weight:600">${esc(p.title)}</div>
+           <div class="small muted">${esc(s.name)} · ${esc(p.date)}</div></div></div>`;}).join(''):`<div class="empty">暂无成果</div>`}
+       </div></div>
+   </div>
+   <div class="card" style="margin-top:16px"><div class="hd"><h3>学生学习路径进度</h3>
+     <button class="btn sm" onclick="go('path')">管理路径</button></div>
+     <div class="pad" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:15px">
+      ${db.students.map(s=>{const p=prog(pathOf(s.id));const pt=pathOf(s.id);return `
+        <div><div class="row" style="gap:8px"><div class="av" style="width:26px;height:26px;flex:0 0 26px;font-size:11px;background:${colorOf(s.name)}">${esc(initials(s.name))}</div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px">${esc(s.name)}</div>
+          <div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(pt.title)}</div></div>
+          <b style="font-size:13px">${p.pct}%</b></div>
+          <div class="pbar"><i style="width:${p.pct}%"></i></div></div>`;}).join('')||'<div class="muted small">还没有学生</div>'}
+     </div></div>`;
+}
+const typeCls=t=>({'作业反馈':'b','一对一答疑':'p','鼓励沟通':'g','作品点评':'o','家长沟通':'r'}[t]||'');
+
+/* ============ students ============ */
+function vStudents(){
+  const groups=[...new Set(db.students.map(s=>s.group).filter(Boolean))];
+  const list=db.students.filter(s=>{
+    const q=ui.q.trim().toLowerCase();
+    const okq=!q||s.name.toLowerCase().includes(q)||(s.grade||'').toLowerCase().includes(q)||(s.tags||[]).join(',').toLowerCase().includes(q);
+    return okq&&(!ui.fg||s.group===ui.fg)&&(!ui.fs||s.status===ui.fs);
+  });
+  $('#topActs').innerHTML=`<button class="btn pri" onclick="editStudent()">${svg('plus')}新增学生</button>`;
+  $('#view').innerHTML=`
+   <div class="filters">
+     <input type="text" placeholder="搜索姓名 / 班级 / 标签" value="${esc(ui.q)}" oninput="ui.q=this.value;clearTimeout(window._t);window._t=setTimeout(vStudents,180)">
+     <select onchange="ui.fg=this.value;vStudents()"><option value="">全部分组</option>${groups.map(g=>`<option ${ui.fg===g?'selected':''}>${esc(g)}</option>`).join('')}</select>
+     <select onchange="ui.fs=this.value;vStudents()"><option value="">全部状态</option>${['在读','休学','毕业'].map(g=>`<option ${ui.fs===g?'selected':''}>${esc(g)}</option>`).join('')}</select>
+     <span class="small muted">共 ${list.length} 位学生</span>
+   </div>
+   ${list.length?`<div class="cards">${list.map(cardStu).join('')}</div>`:
+     `<div class="card empty">${svg('stu')}<div>没有匹配的学生</div></div>`}`;
+}
+function cardStu(s){
+  const p=prog(pathOf(s.id)),n=itsOf(s.id).length,m=postsOf(s.id).length;
+  return `<div class="scard">
+    <div class="toprow"><div class="av" style="background:${colorOf(s.name)}">${esc(initials(s.name))}</div>
+      <div style="flex:1;min-width:0"><div class="nm">${esc(s.name)}
+        <span class="chip ${s.status==='在读'?'g':s.status==='休学'?'o':''}">${esc(s.status)}</span></div>
+        <div class="mt">${esc(s.grade||'未填班级')} · ${esc(s.group||'未分组')}</div></div></div>
+    <div class="tags">${(s.tags||[]).map(t=>`<span class="chip p">${esc(t)}</span>`).join('')}</div>
+    <div class="goal">${esc(s.goal||'暂未填写学习目标')}</div>
+    <div class="row small muted" style="gap:12px;font-size:12px">
+      <span>互动 ${n}</span><span>成果 ${m}</span><span>路径 ${p.pct}%</span>
+      <span style="margin-left:auto">入学 ${esc(s.enroll||'—')}</span></div>
+    <div class="acts">
+      <button class="btn sm" onclick="detailStudent('${s.id}')">${svg('eye')}详情</button>
+      <button class="btn sm" onclick="editStudent('${s.id}')">${svg('edit')}编辑</button>
+      <div style="flex:1"></div>
+      <button class="btn sm dan" onclick="delStudent('${s.id}')">${svg('trash')}删除</button>
+    </div></div>`;
+}
+function editStudent(id){
+  const s=id?S(id):{status:'在读',enroll:today(),gender:'男'};
+  openForm({title:id?'编辑学生信息':'新增学生',wide:true,values:s,okText:id?'保存修改':'添加',
+    body:F.input('name','姓名',s.name,{req:1,ph:'学生姓名'})+
+      F.select('gender','性别',s.gender,['男','女'])+
+      F.input('grade','年级 / 班级',s.grade,{ph:'如 高二(3)班'})+
+      F.input('group','分组',s.group,{ph:'如 竞赛组 / 基础组'})+
+      F.input('phone','学生联系方式',s.phone,{ph:'手机号或微信'})+
+      F.input('guardian','家长联系人',s.guardian,{ph:'称谓 / 手机号'})+
+      F.input('enroll','入学日期',s.enroll,{type:'date'})+
+      F.select('status','状态',s.status,['在读','休学','毕业'])+
+      F.input('tags','标签',(s.tags||[]).join('，'),{full:1,ph:'用逗号分隔，如：信息学，自律'})+
+      F.textarea('goal','学习目标 / 培养方向',s.goal,{ph:'一句话说明这个阶段要达成什么'}),
+    onSubmit:d=>{
+      if(!d.name.trim())return toast('请填写姓名');
+      const obj={...s,name:d.name.trim(),gender:d.gender,grade:d.grade.trim(),group:d.group.trim(),
+        phone:d.phone.trim(),guardian:d.guardian.trim(),enroll:d.enroll,status:d.status,
+        tags:d.tags.split(/[，,、]/).map(x=>x.trim()).filter(Boolean),goal:d.goal.trim()};
+      if(id){Object.assign(S(id),obj);}else{obj.id=uid();db.students.push(obj);db.paths[obj.id]={title:obj.name+' 的学习路径',stages:[]};}
+      save();closeModal();toast(id?'已保存修改':'已添加学生');render();
+    }});
+}
+function delStudent(id){
+  const s=S(id);if(!s)return;
+  const n=itsOf(id).length+postsOf(id).length;
+  confirmBox(`确定删除学生 <b>${esc(s.name)}</b> 吗？<br>将同时删除其 ${itsOf(id).length} 条互动记录、${postsOf(id).length} 篇成果和学习路径，共 ${n} 条关联数据，且不可恢复。`,
+    ()=>{db.students=db.students.filter(x=>x.id!==id);
+      db.interactions=db.interactions.filter(x=>x.sid!==id);
+      db.posts=db.posts.filter(x=>x.sid!==id);delete db.paths[id];
+      save();toast('已删除');render();},true);
+}
+function detailStudent(id){
+  const s=S(id),p=pathOf(id),pr=prog(p),its=itsOf(id).slice(0,4),ps=postsOf(id).slice(0,4);
+  openModal(s.name+' 的档案',`
+    <div class="row" style="gap:13px;margin-bottom:14px">
+      <div class="av" style="width:52px;height:52px;flex:0 0 52px;font-size:18px;background:${colorOf(s.name)}">${esc(initials(s.name))}</div>
+      <div><div style="font-size:17px;font-weight:700">${esc(s.name)} <span class="chip ${s.status==='在读'?'g':''}">${esc(s.status)}</span></div>
+      <div class="small muted">${esc(s.grade||'—')} · ${esc(s.group||'未分组')} · 入学 ${esc(s.enroll||'—')}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px">
+      ${[['学生联系',s.phone],['家长联系人',s.guardian],['互动记录',itsOf(id).length+' 条'],['成果',postsOf(id).length+' 篇']]
+        .map(([k,v])=>`<div style="background:#f7f8fc;border-radius:10px;padding:9px 12px"><div class="small muted">${k}</div><div style="font-weight:600">${esc(v||'—')}</div></div>`).join('')}
+    </div>
+    <div class="small muted" style="margin-bottom:5px">学习目标</div>
+    <div style="background:#f7f8fc;border-radius:10px;padding:10px 12px;margin-bottom:14px">${esc(s.goal||'—')}</div>
+    <div class="small muted" style="margin-bottom:5px">学习路径：${esc(p.title)} · ${pr.d}/${pr.t} 阶段</div>
+    <div class="pbar" style="margin-bottom:14px"><i style="width:${pr.pct}%"></i></div>
+    <div class="small muted" style="margin-bottom:5px">最近互动</div>
+    ${its.length?its.map(i=>`<div class="small" style="padding:6px 0;border-bottom:1px dashed var(--line2)">
+      <b>${esc(i.date)}</b> ${esc(i.topic)} <span class="chip ${typeCls(i.type)}">${esc(i.type)}</span></div>`).join(''):'<div class="small muted">暂无</div>'}
+    <div class="small muted" style="margin:12px 0 5px">最近成果</div>
+    ${ps.length?ps.map(x=>`<div class="small" style="padding:6px 0;border-bottom:1px dashed var(--line2)">
+      <b>${esc(x.date)}</b> ${esc(x.title)}</div>`).join(''):'<div class="small muted">暂无</div>'}`,
+    `<button class="btn" onclick="closeModal()">关闭</button>
+     <button class="btn pri" onclick="closeModal();ui.bsid='${id}';go('blog')">查看博客页</button>`,true);
+}
+
+/* ============ interactions ============ */
+const ITYPES=['作业反馈','一对一答疑','鼓励沟通','作品点评','家长沟通','其他'];
+function vTalk(){
+  const list=db.interactions.filter(i=>(!ui.fsid||i.sid===ui.fsid)&&(!ui.ft||i.type===ui.ft))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  $('#topActs').innerHTML=`<button class="btn pri" onclick="editTalk()">${svg('plus')}新增互动记录</button>`;
+  $('#view').innerHTML=`
+   <div class="filters">
+     <select onchange="ui.fsid=this.value;vTalk()"><option value="">全部学生</option>
+       ${db.students.map(s=>`<option value="${s.id}" ${ui.fsid===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+     <select onchange="ui.ft=this.value;vTalk()"><option value="">全部类型</option>
+       ${ITYPES.map(t=>`<option ${ui.ft===t?'selected':''}>${esc(t)}</option>`).join('')}</select>
+     <span class="small muted">共 ${list.length} 条记录</span>
+   </div>
+   <div class="card pad">
+     ${list.length?`<div class="tl">${list.map(i=>{const s=S(i.sid)||{name:'已删除'};return `
+       <div class="it ${i.next?'':'done'}">
+         <div class="d"><b style="color:${colorOf(s.name)}">${esc(s.name)}</b>
+           <span class="chip ${typeCls(i.type)}">${esc(i.type)}</span>
+           <span style="margin-left:auto">${esc(i.date)}</span>
+           <button class="btn sm" onclick="editTalk('${i.id}')" style="padding:2px 7px">改</button>
+           <button class="btn sm dan" onclick="delTalk('${i.id}')" style="padding:2px 7px">删</button></div>
+         <div class="t">${esc(i.topic)}</div>
+         <div class="c">${esc(i.content)}</div>
+         ${i.next?`<div class="n">下一步：${esc(i.next)}</div>`:''}
+       </div>`;}).join('')}</div>`:`${svg('talk')}<div>暂无互动记录，点击右上角新增</div>`}
+   </div>`;
+  if(!list.length)$('#view .card.pad').classList.add('empty');
+}
+function editTalk(id){
+  const i=id?db.interactions.find(x=>x.id===id):{date:today(),type:'作业反馈',sid:ui.fsid||(db.students[0]||{}).id};
+  openForm({title:id?'编辑互动记录':'新增互动记录',wide:true,values:i,
+    body:F.select('sid','学生',i.sid,db.students.map(s=>({v:s.id,l:s.name})),{full:1})+
+      F.input('date','日期',i.date,{type:'date'})+
+      F.select('type','类型',i.type,ITYPES)+
+      F.input('topic','主题',i.topic,{full:1,req:1,ph:'如：动态规划专题复盘'})+
+      F.textarea('content','沟通内容',i.content,{ph:'发生了什么、观察到什么、给了什么建议'})+
+      F.textarea('next','下一步跟进',i.next,{ph:'下一次要检查什么（可留空）'}),
+    onSubmit:d=>{
+      if(!d.topic.trim())return toast('请填写主题');
+      const obj={...i,sid:d.sid,date:d.date,type:d.type,topic:d.topic.trim(),content:d.content.trim(),next:d.next.trim()};
+      if(id)Object.assign(db.interactions.find(x=>x.id===id),obj);else{obj.id=uid();db.interactions.push(obj);}
+      save();closeModal();toast('已保存');render();
+    }});
+}
+function delTalk(id){
+  confirmBox('确定删除这条互动记录吗？',()=>{db.interactions=db.interactions.filter(x=>x.id!==id);save();toast('已删除');render();},true);
+}
+
+/* ============ paths ============ */
+function vPath(){
+  if(!ui.sid||!S(ui.sid))ui.sid=(db.students[0]||{}).id;
+  const s=S(ui.sid);
+  $('#topActs').innerHTML=s?`<button class="btn" onclick="editPathTitle('${s.id}')">${svg('edit')}编辑路径名</button>
+    <button class="btn pri" onclick="editStage('${s.id}')">${svg('plus')}新增阶段</button>`:'';
+  if(!s){$('#view').innerHTML=`<div class="card empty">${svg('stu')}<div>请先添加学生</div></div>`;return;}
+  const p=pathOf(s.id),pr=prog(p);
+  $('#view').innerHTML=`
+   <div class="pgrid">
+     <div class="card plist no-print">
+       ${db.students.map(x=>{const pp=prog(pathOf(x.id));return `<div class="pi ${x.id===ui.sid?'on':''}" onclick="ui.sid='${x.id}';vPath()">
+         <div class="av" style="background:${colorOf(x.name)}">${esc(initials(x.name))}</div>
+         <div style="flex:1;min-width:0"><div class="nm">${esc(x.name)}</div>
+         <div class="pg">${pp.d}/${pp.t} 阶段 · ${pp.pct}%</div>
+         <div class="pbar"><i style="width:${pp.pct}%"></i></div></div></div>`;}).join('')}
+     </div>
+     <div class="card pad">
+       <div class="row" style="justify-content:space-between;margin-bottom:6px">
+         <div><div style="font-size:16px;font-weight:700">${esc(p.title)}</div>
+           <div class="small muted">${esc(s.name)} · ${esc(s.grade||'')} · 已完成 ${pr.d}/${pr.t} 阶段</div></div>
+         <div style="font-size:26px;font-weight:700;color:var(--pri)">${pr.pct}%</div>
+       </div>
+       <div class="pbar" style="height:9px;margin-bottom:14px"><i style="width:${pr.pct}%"></i></div>
+       <div class="stages">
+        ${p.stages.length?p.stages.map((st,ix)=>`
+          <div class="stage s-${st.status} ${st.status==='done'?'done':''}">
+            <div class="dot">${st.status==='done'?'✓':ix+1}</div>
+            <div class="sp"><div class="ti">${esc(st.title)}
+              <span class="chip ${st.status==='done'?'g':st.status==='doing'?'p':''}">${st.status==='done'?'已完成':st.status==='doing'?'进行中':'待开始'}</span></div>
+              ${st.desc?`<div class="de">${esc(st.desc)}</div>`:''}
+              ${st.due?`<div class="du">目标时间：${esc(st.due)}</div>`:''}</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              ${st.status!=='done'?`<button class="btn sm" onclick="setStage('${s.id}','${st.id}','done')">标记完成</button>`:`<button class="btn sm" onclick="setStage('${s.id}','${st.id}','todo')">撤销</button>`}
+              ${st.status!=='doing'?`<button class="btn sm" onclick="setStage('${s.id}','${st.id}','doing')">进行中</button>`:''}
+              <button class="btn sm" onclick="editStage('${s.id}','${st.id}')">编辑</button>
+              <button class="btn sm dan" onclick="delStage('${s.id}','${st.id}')">删除</button>
+            </div></div>`).join(''):`<div class="empty">${svg('path')}<div>还没有阶段，点击右上角新增</div></div>`}
+       </div>
+     </div>
+   </div>`;
+}
+function editPathTitle(id){
+  const p=pathOf(id);
+  openForm({title:'编辑路径名称',body:F.input('title','路径名称',p.title,{full:1,req:1}),
+    onSubmit:d=>{if(!d.title.trim())return toast('请填写名称');
+      db.paths[id]={...p,title:d.title.trim()};save();closeModal();render();}});
+}
+function editStage(sid,stid){
+  const p=pathOf(sid),st=stid?p.stages.find(x=>x.id===stid):{status:'todo',due:''};
+  openForm({title:stid?'编辑阶段':'新增阶段',wide:true,values:st,
+    body:F.input('title','阶段名称',st.title,{full:1,req:1,ph:'如：动态规划专题'})+
+      F.textarea('desc','阶段说明',st.desc,{ph:'要学什么、做到什么程度'})+
+      F.input('due','目标完成时间',st.due,{type:'date'})+
+      F.select('status','状态',st.status,[{v:'todo',l:'待开始'},{v:'doing',l:'进行中'},{v:'done',l:'已完成'}]),
+    onSubmit:d=>{
+      if(!d.title.trim())return toast('请填写阶段名称');
+      const obj={...st,title:d.title.trim(),desc:d.desc.trim(),due:d.due,status:d.status};
+      if(stid)Object.assign(p.stages.find(x=>x.id===stid),obj);else{obj.id=uid();p.stages.push(obj);}
+      db.paths[sid]=p;save();closeModal();toast('已保存');render();
+    }});
+}
+function setStage(sid,stid,status){const p=pathOf(sid);const st=p.stages.find(x=>x.id===stid);if(st)st.status=status;
+  save();render();toast(status==='done'?'已标记完成':'已更新状态');}
+function delStage(sid,stid){confirmBox('确定删除这个阶段吗？',()=>{const p=pathOf(sid);
+  p.stages=p.stages.filter(x=>x.id!==stid);db.paths[sid]=p;save();toast('已删除');render();},true);}
+
+/* ============ blog ============ */
+const PTYPES=['作品','获奖','证书','项目','随笔','其他'];
+function vBlog(){
+  if(!ui.bsid||!S(ui.bsid))ui.bsid=(db.students[0]||{}).id;
+  const s=S(ui.bsid);
+  if(!s){$('#view').innerHTML=`<div class="card empty">${svg('stu')}<div>请先添加学生</div></div>`;$('#topActs').innerHTML='';return;}
+  const ps=postsOf(s.id),p=pathOf(s.id),pr=prog(p),its=itsOf(s.id).length;
+  $('#topActs').innerHTML=`<button class="btn" onclick="copyShare('${s.id}')">${svg('share')}复制分享摘要</button>
+     <button class="btn" onclick="exportBlog('${s.id}')">${svg('dl')}导出博客页</button>
+     <button class="btn pri" onclick="editPost('${s.id}')">${svg('plus')}发布成果</button>`;
+  $('#view').innerHTML=`
+   <div class="bgrid">
+     <div class="card plist no-print" style="max-height:calc(100vh - 210px);overflow:auto">
+       ${db.students.map(x=>`<div class="pi ${x.id===ui.bsid?'on':''}" onclick="ui.bsid='${x.id}';vBlog()">
+         <div class="av" style="background:${colorOf(x.name)}">${esc(initials(x.name))}</div>
+         <div style="flex:1;min-width:0"><div class="nm">${esc(x.name)}</div>
+         <div class="pg">${postsOf(x.id).length} 篇成果</div></div></div>`).join('')}
+     </div>
+     <div>
+       <div class="bhead">
+         <div class="row" style="gap:14px">
+           <div class="av">${esc(initials(s.name))}</div>
+           <div><h3>${esc(s.name)}<span style="font-size:12px;opacity:.85;font-weight:400"> 的成长博客</span></h3>
+           <div class="g">${esc(s.grade||'')} ${s.group?'· '+esc(s.group):''} ${s.goal?'· '+esc(s.goal):''}</div></div>
+         </div>
+         <div class="bs"><div><b>${ps.length}</b><span>成果</span></div>
+           <div><b>${its}</b><span>互动</span></div>
+           <div><b>${pr.pct}%</b><span>路径进度</span></div>
+           <div><b>${esc(s.enroll?s.enroll.slice(0,7):'—')}</b><span>入学</span></div></div>
+       </div>
+       <div class="posts">
+        ${ps.length?ps.map(x=>`<div class="post">
+          <div class="cov" style="background:linear-gradient(135deg,${colorOf(x.type)},${colorOf(x.title)})">${esc(x.type)}</div>
+          <div class="bd">
+            <div class="small muted">${esc(x.date)}</div>
+            <h4>${esc(x.title)}</h4>
+            <div class="s">${esc(x.summary||x.content.slice(0,90))}</div>
+            <div class="tags" style="margin-top:8px">${(x.tags||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
+          </div>
+          <div class="ft"><div class="sp"></div>
+            <button class="btn sm" onclick="readPost('${x.id}')">阅读</button>
+            <button class="btn sm" onclick="editPost('${s.id}','${x.id}')">编辑</button>
+            <button class="btn sm dan" onclick="delPost('${x.id}')">删除</button></div>
+        </div>`).join(''):''}
+       </div>
+       ${ps.length?'':`<div class="card empty" style="margin-top:16px">${svg('blog')}<div>还没有成果，点击右上角发布</div></div>`}
+     </div>
+   </div>`;
+}
+function editPost(sid,id){
+  const x=id?db.posts.find(p=>p.id===id):{date:today(),type:'作品',sid:sid};
+  openForm({title:id?'编辑成果':'发布成果',wide:true,values:x,
+    body:F.input('title','标题',x.title,{full:1,req:1,ph:'成果名称'})+
+      F.select('type','类型',x.type,PTYPES)+
+      F.input('date','日期',x.date,{type:'date'})+
+      F.input('tags','标签',(x.tags||[]).join('，'),{ph:'逗号分隔'})+
+      F.textarea('summary','一句话摘要',x.summary,{ph:'列表页显示的简介'})+
+      F.textarea('content','正文',x.content,{h:150,ph:'完整内容，支持换行'}),
+    onSubmit:d=>{
+      if(!d.title.trim())return toast('请填写标题');
+      const obj={...x,sid,title:d.title.trim(),type:d.type,date:d.date,
+        tags:d.tags.split(/[，,、]/).map(t=>t.trim()).filter(Boolean),
+        summary:d.summary.trim(),content:d.content};
+      if(id)Object.assign(db.posts.find(p=>p.id===id),obj);else{obj.id=uid();db.posts.push(obj);}
+      save();closeModal();toast(id?'已保存':'已发布');render();
+    }});
+}
+function readPost(id){
+  const x=db.posts.find(p=>p.id===id),s=S(x.sid)||{name:'—'};
+  openModal(x.title,`<div class="row small muted" style="gap:9px;margin-bottom:11px">
+      <span class="chip ${typeCls(x.type)||'p'}">${esc(x.type)}</span><span>${esc(s.name)}</span><span>${esc(x.date)}</span></div>
+    <div class="article">${esc(x.content||x.summary||'（暂无正文）')}</div>
+    <div class="tags" style="margin-top:14px">${(x.tags||[]).map(t=>`<span class="chip p">${esc(t)}</span>`).join('')}</div>`,
+    `<button class="btn" onclick="closeModal()">关闭</button>
+     <button class="btn pri" onclick="exportBlog('${x.sid}')">导出该学生博客</button>`,true);
+}
+function delPost(id){confirmBox('确定删除这篇成果吗？',()=>{db.posts=db.posts.filter(p=>p.id!==id);save();toast('已删除');render();},true);}
+
+/* ============ share ============ */
+function shareText(sid){
+  const s=S(sid),ps=postsOf(sid),p=pathOf(sid),pr=prog(p);
+  return `【${s.name} 的成长档案】\n${s.grade||''} · 路径进度 ${pr.pct}%（${pr.d}/${pr.t} 阶段）\n\n`+
+    ps.map(x=>`· ${x.date} [${x.type}] ${x.title}\n  ${x.summary||''}`).join('\n')+
+    `\n\n共 ${ps.length} 项成果，${itsOf(sid).length} 次师生互动记录。`;
+}
+function copyShare(sid){
+  const t=shareText(sid);
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(()=>toast('分享摘要已复制'));
+  else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');toast('分享摘要已复制');}catch(e){toast('复制失败，请手动选择');}ta.remove();}
+}
+function blogHTML(sid){
+  const s=S(sid),ps=postsOf(sid),p=pathOf(sid),pr=prog(p),its=itsOf(sid);
+  const c=colorOf(s.name);
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(s.name)} 的成长博客</title>
+<style>body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6fa;color:#1c2033;margin:0;line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding:34px 20px 70px}
+.hd{background:linear-gradient(135deg,${c},#0ea5e9);color:#fff;border-radius:16px;padding:26px}
+.hd h1{font-size:24px;margin:0}.hd .g{opacity:.92;font-size:13.5px;margin-top:6px}
+.hd .bs{display:flex;gap:24px;margin-top:16px}.hd .bs b{display:block;font-size:20px}.hd .bs span{font-size:12px;opacity:.85}
+.sec{margin-top:26px;font-size:15px;font-weight:700;color:#5b6478}
+.card{background:#fff;border:1px solid #e6e8f0;border-radius:14px;padding:16px 18px;margin-top:11px}
+.card h3{margin:0 0 4px;font-size:15px}.card .m{font-size:12.5px;color:#8b93a7}
+.card .c{white-space:pre-wrap;font-size:13.5px;color:#5b6478;margin-top:8px}
+.chip{display:inline-block;padding:1px 9px;border-radius:20px;background:#eef0ff;color:#4f46e5;font-size:11.5px;margin-right:5px}
+.stage{padding:9px 0;border-bottom:1px dashed #eef0f6;font-size:13.5px}
+.stage:last-child{border:0}.stage b{color:#1c2033}.done{color:#8b93a7;text-decoration:line-through}
+.foot{text-align:center;color:#8b93a7;font-size:12px;margin-top:34px}
+.no-print{display:block}@media print{body{background:#fff}.no-print{display:none}}</style></head><body>
+<div class="wrap">
+  <button class="no-print" onclick="window.print()" style="float:right;padding:7px 14px;border:1px solid #e6e8f0;background:#fff;border-radius:9px;cursor:pointer">打印 / 存为 PDF</button>
+  <div class="hd"><h1>${esc(s.name)} 的成长博客</h1>
+    <div class="g">${esc(s.grade||'')}${s.group?' · '+esc(s.group):''}${s.goal?' · '+esc(s.goal):''}</div>
+    <div class="bs"><div><b>${ps.length}</b><span>成果</span></div><div><b>${its.length}</b><span>互动</span></div>
+      <div><b>${pr.pct}%</b><span>路径进度</span></div><div><b>${esc(s.enroll||'—')}</b><span>入学</span></div></div></div>
+  <div class="sec">学习路径：${esc(p.title)}</div>
+  <div class="card">${p.stages.length?p.stages.map((st,i)=>`<div class="stage ${st.status==='done'?'done':''}">
+    <b>${i+1}. ${esc(st.title)}</b> ${st.status==='done'?'<span class="chip">已完成</span>':st.status==='doing'?'<span class="chip">进行中</span>':''}
+    ${st.desc?`<div class="c" style="margin-top:2px">${esc(st.desc)}</div>`:''}
+    ${st.due?`<div class="m">目标时间：${esc(st.due)}</div>`:''}</div>`).join(''):'暂未设置阶段'}</div>
+  <div class="sec">成果展示（${ps.length}）</div>
+  ${ps.length?ps.map(x=>`<div class="card"><h3>${esc(x.title)} <span class="chip">${esc(x.type)}</span></h3>
+    <div class="m">${esc(x.date)}${(x.tags||[]).length?' · '+x.tags.map(t=>esc(t)).join(' / '):''}</div>
+    <div class="c">${esc(x.content||x.summary||'')}</div></div>`).join(''):'<div class="card">暂无成果</div>'}
+  <div class="sec">师生互动记录（${its.length}）</div>
+  ${its.length?its.map(i=>`<div class="card"><h3>${esc(i.topic)} <span class="chip">${esc(i.type)}</span></h3>
+    <div class="m">${esc(i.date)}</div><div class="c">${esc(i.content)}</div>
+    ${i.next?`<div class="c" style="color:#0284c7">下一步：${esc(i.next)}</div>`:''}</div>`).join(''):'<div class="card">暂无记录</div>'}
+  <div class="foot">由「学生成长管理平台」导出 · ${today()}</div>
+</div></body></html>`;
+}
+function download(name,content,type){
+  const b=new Blob([content],{type:type||'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+function exportBlog(sid){const s=S(sid);download(`${s.name}-成长博客.html`,blogHTML(sid),'text/html;charset=utf-8');toast('已导出博客页');}
+function exportJSON(){download(`学生数据备份-${today()}.json`,JSON.stringify(db,null,2),'application/json');toast('已导出数据备份');}
+function importJSON(inp){
+  const f=inp.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);
+    if(!d.students)throw 0;db=d;db.posts=db.posts||[];db.interactions=db.interactions||[];db.paths=db.paths||{};
+    save();toast('数据已导入');render();}catch(e){toast('文件格式不正确');}inp.value='';};
+  r.readAsText(f,'utf-8');
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+render();
+</script>
+</body>
+</html>
