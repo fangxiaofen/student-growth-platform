@@ -4,6 +4,9 @@
 
 打开 `student-hub.html` 即可使用，不需要安装、不需要联网、不需要服务器。
 
+- 仓库：https://github.com/fangxiaofen/student-growth-platform
+- 在线直接用：https://fangxiaofen.github.io/student-growth-platform/student-hub.html
+
 ## 功能模块
 
 | 模块 | 说明 |
