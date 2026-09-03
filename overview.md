@@ -1,5 +1,10 @@
 # 学生成长管理平台 — 交付说明
 
+## 在线地址
+- GitHub 仓库（公开）：https://github.com/fangxiaofen/student-growth-platform
+- 在线直接使用（GitHub Pages）：https://fangxiaofen.github.io/student-growth-platform/student-hub.html
+- 本地文件：`student-hub.html`
+
 ## 成果
 单文件网页应用：`student-hub.html`（57 KB，零依赖，双击即用，无需联网、无需服务器）。
 
